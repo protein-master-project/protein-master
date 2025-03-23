@@ -52,3 +52,25 @@ def download_pdb():
         mimetype='chemical/x-pdb',
         headers={"Content-Disposition": f"attachment; filename={pdb_id}.pdb"}
     )
+
+@app.route('/raw', methods=['GET'])
+def raw_pdb():
+    pdb_id = request.args.get('pdb_id', '').strip()
+    db = request.args.get('db', '').strip().lower()
+
+    if not pdb_id or not db:
+        return jsonify({"error": "Missing 'pdb_id' or 'db' parameter"}), 400
+
+    connector = ConnectorFactory.get_connector(db)
+    if not connector:
+        return jsonify({"error": f"No connector found for db: {db}"}), 400
+
+    try:
+        pdb_content = connector.download_proteins_by_pdb_id(pdb_id)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 404
+
+    return Response(
+        pdb_content,
+        mimetype='text/plain',
+    )
