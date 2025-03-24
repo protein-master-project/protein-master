@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Contact Matrix Visualization</title>
+  <!-- Import map for Three.js modules -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.174.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.174.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    /* Optional: scale the canvas for better visualization */
+    #contactMatrixCanvas {
+      image-rendering: pixelated;
+      width: 500px;
+      height: 500px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <!-- Load the Three.js library required by PDBLoader -->
+  <script type="module">
+    import * as THREE from 'three';
+  </script>
+
+  <!-- Canvas element for drawing the contact matrix -->
+  <canvas id="contactMatrixCanvas"></canvas>
+
+  <script type="module">
+    import { PDBLoader } from 'three/addons/loaders/PDBLoader.js';
+
+    // Define the distance threshold for contacts
+    const threshold = 8.0;
+
+    // Create an instance of the PDBLoader
+    const pdbLoader = new PDBLoader();
+
+    // Load the PDB file using the given URL parameters
+    pdbLoader.load(
+      '/raw?pdb_id=1WMU&db=rcsb',
+      // On successful load callback
+      (pdb) => {
+        const atoms = pdb.json.atoms;
+        const numAtoms = atoms.length;
+        console.log(`The molecule contains ${numAtoms} atoms.`);
+
+        // Get the canvas and its 2D drawing context
+        const canvas = document.getElementById("contactMatrixCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Set canvas dimensions to match the number of atoms
+        canvas.width = numAtoms;
+        canvas.height = numAtoms;
+
+        // Create image data to draw the contact matrix
+        const imageData = ctx.createImageData(numAtoms, numAtoms);
+
+        // Iterate over all pairs of atoms to compute distances and determine contacts
+        for (let i = 0; i < numAtoms; i++) {
+          const atomI = atoms[i];
+          for (let j = 0; j < numAtoms; j++) {
+            const atomJ = atoms[j];
+
+            // Calculate the Euclidean distance between two atoms
+            const dx = atomI[0] - atomJ[0];
+            const dy = atomI[1] - atomJ[1];
+            const dz = atomI[2] - atomJ[2];
+            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            // Determine pixel color: white for contact (distance < threshold), black otherwise
+            const pixelValue = (distance < threshold) ? 255 : 0;
+            const pixelIndex = (i * numAtoms + j) * 4;
+            imageData.data[pixelIndex] = pixelValue;       // Red channel
+            imageData.data[pixelIndex + 1] = pixelValue;   // Green channel
+            imageData.data[pixelIndex + 2] = pixelValue;   // Blue channel
+            imageData.data[pixelIndex + 3] = 255;            // Alpha (fully opaque)
+          }
+        }
+
+        // Draw the computed image data onto the canvas
+        ctx.putImageData(imageData, 0, 0);
+      },
+      // Loading progress callback
+      (xhr) => {
+        if (xhr.total) {
+          console.log(`${(xhr.loaded / xhr.total * 100).toFixed(2)}% loaded`);
+        } else {
+          console.log('Loading...');
+        }
+      },
+      // Error handling callback
+      (error) => {
+        console.error('An error occurred while loading the PDB file:', error);
+      }
+    );
+  </script>
+</body>
+</html>

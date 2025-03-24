@@ -6,9 +6,9 @@
       name="viewport"
       content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
     />
-    <title>PDBe Molstar - Helper functions</title>
+    <title>PDBe Mol* JS Plugin Demo</title>
 
-    <!-- Molstar CSS & JS -->
+    <!-- Mol* CSS & JS -->
     <link
       rel="stylesheet"
       type="text/css"
@@ -36,147 +36,50 @@
 
   <body>
     <h3>PDBe Mol* JS Plugin Demo</h3>
-
     <div id="myViewer"></div>
 
     <script>
-      // Create plugin instance
-      const viewerInstance = new PDBeMolstarPlugin();
+      // Asynchronously initialize the Mol* plugin
+      async function initMolstar() {
+        try {
+          // Fetch the pdb file
+          const response = await fetch('/raw?pdb_id=1WMU&db=rcsb');
+          const pdbText = await response.text();
 
-      // get pdb data from backend
-      let pdb_data= {
-          url: '/raw?pdb_id=1WMU&db=rcsb',
-          format: 'pdb',
+          // Create a Blob URL from the pdb text
+          const blob = new Blob([pdbText], { type: 'text/plain' });
+          const blobPDBURL = URL.createObjectURL(blob);
+
+          // Configure and render the Mol* plugin
+          const viewerInstance = new PDBeMolstarPlugin();
+          const options = {
+            customData: { url:
+              blobPDBURL,
+              format: 'pdb'
+            },
+            alphafoldView: true,
+            bgColor: { r: 255, g: 255, b: 255 },
+            hideCanvasControls: [
+              'selection',
+              'animation',
+              'controlToggle',
+              'controlInfo',
+            ],
+            sequencePanel: true,
+            landscape: true,
+          };
+          const viewerContainer = document.getElementById('myViewer');
+          viewerInstance.render(viewerContainer, options);
+
+          // Cache the pdb text globally for other uses
+          window.cachedPdbData = pdbText;
+        } catch (error) {
+          console.error('Error fetching the pdb file:', error);
         }
+      }
 
-      const options = {
-        customData: pdb_data,
-        alphafoldView: true,
-        bgColor: { r: 255, g: 255, b: 255 },
-        hideCanvasControls: [
-          'selection',
-          'animation',
-          'controlToggle',
-          'controlInfo',
-        ],
-        sequencePanel: true,
-        landscape: true,
-      };
-
-      // Get element from HTML/Template to place the viewer
-      const viewerContainer = document.getElementById('myViewer');
-
-      // Call render method to display the 3D view
-      viewerInstance.render(viewerContainer, options);
+      // Start the initialization
+      initMolstar();
     </script>
   </body>
 </html>
-
-
-<!--<!DOCTYPE html>-->
-<!--<html lang="en">-->
-<!--  <head>-->
-<!--    <meta charset="utf-8" />-->
-<!--    <meta-->
-<!--      name="viewport"-->
-<!--      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"-->
-<!--    />-->
-<!--    <title>PDBe Molstar plugin - Basic</title>-->
-
-<!--    &lt;!&ndash; Molstar CSS & JS &ndash;&gt;-->
-<!--    <link-->
-<!--      rel="stylesheet"-->
-<!--      type="text/css"-->
-<!--      href="https://cdn.jsdelivr.net/npm/pdbe-molstar@3.2.0/build/pdbe-molstar.css"-->
-<!--    />-->
-<!--    <script-->
-<!--      type="text/javascript"-->
-<!--      src="https://cdn.jsdelivr.net/npm/pdbe-molstar@3.2.0/build/pdbe-molstar-plugin.js"-->
-<!--    ></script>-->
-
-<!--    <style>-->
-<!--      #myViewer {-->
-<!--        float: left;-->
-<!--        width: 400px;-->
-<!--        height: 300px;-->
-<!--        position: relative;-->
-<!--        margin: 20px;-->
-<!--      }-->
-<!--    </style>-->
-<!--  </head>-->
-
-<!--  <body>-->
-<!--    <h3>PDBe Mol* JS Plugin Demo</h3>-->
-
-<!--    &lt;!&ndash; Molstar container &ndash;&gt;-->
-<!--    <div id="myViewer"></div>-->
-
-<!--    <script>-->
-<!--      // Create plugin instance-->
-<!--      const viewerInstance = new PDBeMolstarPlugin();-->
-
-<!--      // Set options (uncomment lines to explore various options)-->
-<!--      const options = {-->
-<!--        // DATA-->
-<!--        moleculeId: '1cbs',-->
-<!--        // customData: {-->
-<!--        //   url: 'https://alphafold.ebi.ac.uk/files/AF-O15552-F1-model_v1.cif',-->
-<!--        //   format: 'cif',-->
-<!--        //   binary: false,-->
-<!--        // },-->
-<!--        // assemblyId: '1',-->
-<!--        // defaultPreset: 'default', // default | unitcell | all-models |supercell-->
-<!--        // ligandView: { label_comp_id: 'REA' },-->
-<!--        // superposition-->
-<!--        // selection: {-->
-<!--        //   data: [-->
-<!--        //     {-->
-<!--        //       struct_asym_id: 'A',-->
-<!--        //       start_residue_number: 1,-->
-<!--        //       end_residue_number: 20,-->
-<!--        //       color: '#ffff00',-->
-<!--        //     },-->
-<!--        //   ],-->
-<!--        //   nonSelectedColor: '#ddccbb',-->
-<!--        // },-->
-
-<!--        // APPEARANCE-->
-<!--        // visualStyle: 'cartoon', // cartoon | ball-and-stick | carbohydrate | ellipsoid | gaussian-surface | molecular-surface | point | putty | spacefill-->
-<!--        // hideStructure: ['het', 'water'],-->
-<!--        // loadMaps: true,-->
-<!--        // mapSettings: { '2fo-fc': { opacity: 0.8, wireframe: true } },-->
-<!--        // bgColor: { r: 60, g: 0, b: 100 },-->
-<!--        // highlightColor: '#ffff00',-->
-<!--        // selectColor: '#77bbff',-->
-<!--        // lighting: 'flat', // flat | matte | glossy | metallic | plastic-->
-
-<!--        // BEHAVIOR-->
-<!--        // validationAnnotation: true,-->
-<!--        // domainAnnotation: true,-->
-<!--        // symmetryAnnotation: true,-->
-<!--        // pdbeUrl: 'https://www.ebi.ac.uk/pdbe/',-->
-<!--        // encoding: 'cif', // cif | bcif-->
-<!--        // lowPrecisionCoords: true,-->
-<!--        // selectInteraction: false,-->
-<!--        // granularity: 'chain', // element | residue | chain | entity | model | operator | structure | elementInstances | residueInstances | chainInstances-->
-<!--        // subscribeEvents: true,-->
-
-<!--        // INTERFACE-->
-<!--        // hideControls: true,-->
-<!--        // hideCanvasControls: ['expand', 'selection', 'animation', 'controlToggle', 'controlInfo']-->
-<!--        // sequencePanel: true,-->
-<!--        // pdbeLink: false,-->
-<!--        // loadingOverlay: true,-->
-<!--        // expanded: true,-->
-<!--        // landscape: true,-->
-<!--        // reactive: true,-->
-<!--      };-->
-
-<!--      // Get element from HTML/Template to place the viewer-->
-<!--      const viewerContainer = document.getElementById('myViewer');-->
-
-<!--      // Call render method to display the 3D view-->
-<!--      viewerInstance.render(viewerContainer, options);-->
-<!--    </script>-->
-<!--  </body>-->
-<!--</html>-->
