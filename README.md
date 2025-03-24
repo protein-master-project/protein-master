@@ -16,3 +16,12 @@ http://127.0.0.1:8080/raw?pdb_id=1WMU&db=rcsb
 Download .pdb file by pdb_id
 http://127.0.0.1:8080/download?pdb_id=1WMU&db=rcsb
 ```
+
+## Pages
+```
+# mol* demo
+http://127.0.0.1:8080
+
+# Contact map demo
+http://127.0.0.1:8080/matrix
+```
