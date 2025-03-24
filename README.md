@@ -2,10 +2,11 @@
 
 ## Setup
 ```shell
+pip install -r requirements.txt
 python run.py
 ```
 
-## API list
+## APIs
 ```
 Search proteins by keyword
 http://127.0.0.1:8080/search?keyword=hemoglobin&db=rcsb
@@ -20,8 +21,8 @@ http://127.0.0.1:8080/download?pdb_id=1WMU&db=rcsb
 ## Pages
 ```
 # mol* demo
-http://127.0.0.1:8080
+http://127.0.0.1:8080/molstar
 
-# Contact map demo
+# protein contact map demo
 http://127.0.0.1:8080/matrix
 ```

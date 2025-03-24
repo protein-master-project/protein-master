@@ -1,8 +1,8 @@
 from app import app
 from flask import Flask, jsonify, render_template
-@app.route('/')
+@app.route('/molstar')
 def index():
-    return render_template('index.html')
+    return render_template('molstar.html')
 
 
 @app.route('/matrix')
