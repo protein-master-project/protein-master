@@ -35,7 +35,7 @@
     import { PDBLoader } from 'three/addons/loaders/PDBLoader.js';
 
     // Define the distance threshold for contacts
-    const threshold = 8.0;
+    const threshold = 10.0;
 
     // Create an instance of the PDBLoader
     const pdbLoader = new PDBLoader();
@@ -75,10 +75,23 @@
             // Determine pixel color: white for contact (distance < threshold), black otherwise
             const pixelValue = (distance < threshold) ? 255 : 0;
             const pixelIndex = (i * numAtoms + j) * 4;
-            imageData.data[pixelIndex] = pixelValue;       // Red channel
-            imageData.data[pixelIndex + 1] = pixelValue;   // Green channel
-            imageData.data[pixelIndex + 2] = pixelValue;   // Blue channel
-            imageData.data[pixelIndex + 3] = 255;            // Alpha (fully opaque)
+            // imageData.data[pixelIndex] = pixelValue;       // Red channel
+            // imageData.data[pixelIndex + 1] = pixelValue;   // Green channel
+            // imageData.data[pixelIndex + 2] = pixelValue;   // Blue channel
+            // imageData.data[pixelIndex + 3] = 255;            // Alpha (fully opaque)
+
+            if (distance < threshold) {
+              const intensity = Math.floor(((threshold - distance) / threshold) * 255);
+              imageData.data[pixelIndex] = 255;          // red
+              imageData.data[pixelIndex + 1] = 255 - intensity;  // green
+              imageData.data[pixelIndex + 2] = 255 - intensity;  // blue
+              imageData.data[pixelIndex + 3] = 255;
+            } else {
+              imageData.data[pixelIndex] = 255;
+              imageData.data[pixelIndex + 1] = 255;
+              imageData.data[pixelIndex + 2] = 255;
+              imageData.data[pixelIndex + 3] = 255;
+            }
           }
         }
 

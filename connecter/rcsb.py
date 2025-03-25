@@ -3,7 +3,6 @@ from rcsbapi.search import TextQuery
 
 from connecter.connector_abc import ConnectorABC
 
-
 class RCSBConnector(ConnectorABC):
 
     def search_proteins_by_keyword(self, keyword):
