@@ -8,4 +8,4 @@ Jinja2~=3.1.6
 blinker~=1.9.0
 itsdangerous~=2.2.0
 requests==2.28.1
-rcsb-api
+rcsb-api==1.1.2
