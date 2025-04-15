@@ -25,4 +25,10 @@ http://127.0.0.1:8080/molstar
 
 # protein contact map demo
 http://127.0.0.1:8080/matrix
+
+# protein structure contrast
+http://127.0.0.1:8080/contrast
+
+# protein bar contrast
+http://127.0.0.1:8080/barcontrast
 ```
