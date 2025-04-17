@@ -2,17 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>3Dmol.js PDB Viewer</title>
-    <!-- 引入 3Dmol.js 库 -->
+    <title>3Dmol.js Aligned PDB Viewer</title>
+    <!-- 3Dmol.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.4.2/3Dmol-min.js"></script>
     <style>
-        /* 设置分子查看器容器样式 */
         #viewer {
             width: 800px;
             height: 600px;
-            position: relative;
             margin: auto;
-            border: 1px solid #ccc; /* 添加边框便于调试 */
+            border: 1px solid #ccc;
+            position: relative;
         }
         #error {
             color: red;
@@ -22,46 +21,55 @@
     </style>
 </head>
 <body>
-    <!-- 分子查看器容器 -->
     <div id="viewer"></div>
     <div id="error"></div>
 
     <script>
-        // 初始化 3Dmol.js 查看器
-        let viewer = $3Dmol.createViewer("viewer");
+    (async function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pdb1_id = urlParams.get('pdb1_id') || '1avr';
+    const pdb2_id = urlParams.get('pdb2_id') || '4pti';
+    const db = urlParams.get('db') || 'rcsb';
 
-        // 同步加载两个 PDB 文件
-        Promise.all([
-            fetch('/static/aligned1.pdb').then(response => {
-                if (!response.ok) throw new Error('Failed to load aligned1.pdb');
-                return response.text();
-            }),
-            fetch('/static/aligned2.pdb').then(response => {
-                if (!response.ok) throw new Error('Failed to load aligned2.pdb');
-                return response.text();
-            })
-        ])
-        .then(([data1, data2]) => {
-            // 添加第一个模型（红色）
-            viewer.addModel(data1, "pdb");
-            viewer.setStyle({ model: 0 }, { cartoon: { color: 'red' } });
+    const params = new URLSearchParams({ pdb1_id, pdb2_id, db });
 
-            // 添加第二个模型（蓝色）
-            viewer.addModel(data2, "pdb");
-            viewer.setStyle({ model: 1 }, { cartoon: { color: 'blue' } });
+    let aligned1, aligned2;
 
-            // 缩放到两个模型的共同区域
-            viewer.zoomTo();
-            viewer.render();
-            document.getElementById("error").innerText = "Loaded aligned1.pdb (red) and aligned2.pdb (blue) successfully";
-        })
-        .catch(error => {
-            document.getElementById("error").innerText = `Error: ${error.message}`;
-            console.error("PDB load error:", error);
-        });
+    try {
+        const resp = await fetch(`/align?${params.toString()}`);
+        const json = await resp.json();
 
-        // 设置查看器背景颜色
-        viewer.setBackgroundColor(0xffffff); // 白色背景
-    </script>
+        if (!resp.ok || json.error) {
+            throw new Error(json.error || `Server returned ${resp.status}`);
+        }
+
+        aligned1 = json.aligned1;
+        aligned2 = json.aligned2;
+
+        console.log("aligned1 content:\n", aligned1.slice(0, 300));
+
+        // 3Dmol.js 渲染
+        const viewer = $3Dmol.createViewer('viewer', { backgroundColor: 'white' });
+
+        viewer.addModel(aligned1, 'pdb');
+        viewer.setStyle({ model: 0 }, { cartoon: { color: 'red' } });
+
+        viewer.addModel(aligned2, 'pdb');
+        viewer.setStyle({ model: 1 }, { cartoon: { color: 'blue' } });
+
+        viewer.zoomTo();
+        viewer.render();
+
+        document.getElementById('error').innerText =
+            `Aligned ${pdb1_id} (red) & ${pdb2_id} (blue) loaded.`;
+
+    } catch (err) {
+        document.getElementById('error').innerText = `Error: ${err.message}`;
+        console.error(err);
+    }
+})();
+</script>
+
+
 </body>
 </html>

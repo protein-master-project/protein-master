@@ -5,6 +5,11 @@
 pip install -r requirements.txt
 python run.py
 ```
+PyMOL Install
+```
+brew install brewsci/bio/pymol # for macbook
+```
+
 
 ## APIs
 ```
@@ -32,3 +37,4 @@ http://127.0.0.1:8080/contrast
 # protein bar contrast
 http://127.0.0.1:8080/barcontrast
 ```
+
