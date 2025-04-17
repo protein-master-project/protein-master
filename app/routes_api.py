@@ -86,22 +86,6 @@ def raw_pdb():
         mimetype='text/plain',
     )
 
-
-# def align_with_pymol(pdb1_path, pdb2_path):
-#     # 安静启动 PyMOL（-qc 表示 quiet, no GUI）
-#     pymol.finish_launching(['pymol', '-qc'])
-#     cmd.load(pdb1_path, 'mol1')
-#     cmd.load(pdb2_path, 'mol2')
-#     cmd.align('mol2', 'mol1')
-#     # 获取对齐后的 PDB 文本
-#     aligned1 = cmd.get_pdbstr('mol1')
-#     aligned2 = cmd.get_pdbstr('mol2')
-#     cmd.quit()
-#     return aligned1, aligned2
-
-
-
-
 @app.route('/align', methods=['GET'])
 def align_proteins():
     # 1. Parse and validate input parameters
