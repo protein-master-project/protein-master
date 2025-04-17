@@ -43,7 +43,7 @@
       async function initMolstar() {
         try {
           // Fetch the pdb file
-          const response = await fetch('/raw?pdb_id=1WMU&db=rcsb');
+          
           const pdbText = await response.text();
 
           // Create a Blob URL from the pdb text
@@ -83,3 +83,4 @@
     </script>
   </body>
 </html>
+

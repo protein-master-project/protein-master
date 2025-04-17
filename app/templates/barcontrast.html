@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3Dmol.js PDB Viewer with Secondary Structure</title>
+    <!-- 引入 3Dmol.js 库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.4.2/3Dmol-min.js"></script>
+    <!-- 引入 D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        #viewer {
+            width: 800px;
+            height: 600px;
+            position: relative;
+            margin: auto;
+            border: 1px solid #ccc;
+        }
+        #error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+        #structure-container {
+            width: 800px;
+            margin: 20px auto;
+            font-family: Arial, sans-serif;
+        }
+        .structure-label {
+            font-weight: bold;
+            margin-right: 10px;
+            width: 100px;
+            display: inline-block;
+        }
+        .structure-bar {
+            display: inline-block;
+            width: 600px;
+            height: 20px;
+            position: relative;
+            background: #f0f0f0;
+        }
+        .helix { background: #ff4040; } /* 红色：Helix */
+        .strand { background: #ffd700; } /* 黄色：Beta strand */
+        .turn { background: #4040ff; } /* 蓝色：Turn */
+    </style>
+</head>
+<body>
+
+    <!-- 二级结构对比图 -->
+    <div id="structure-container">
+        <h3>Secondary Structure Comparison</h3>
+        <div>
+            <span class="structure-label">Helix (aligned1)</span>
+            <div id="helix1" class="structure-bar"></div>
+        </div>
+        <div>
+            <span class="structure-label">Helix (aligned2)</span>
+            <div id="helix2" class="structure-bar"></div>
+        </div>
+        <div>
+            <span class="structure-label">Beta strand (aligned1)</span>
+            <div id="strand1" class="structure-bar"></div>
+        </div>
+        <div>
+            <span class="structure-label">Beta strand (aligned2)</span>
+            <div id="strand2" class="structure-bar"></div>
+        </div>
+        <div>
+            <span class="structure-label">Turn (aligned1)</span>
+            <div id="turn1" class="structure-bar"></div>
+        </div>
+        <div>
+            <span class="structure-label">Turn (aligned2)</span>
+            <div id="turn2" class="structure-bar"></div>
+        </div>
+    </div>
+
+    <script>
+
+        // 获取并绘制二级结构对比图
+        function drawSecondaryStructure(jsonFiles, helixIds, strandIds, turnIds) {
+            // 同步加载两个 JSON 文件
+            Promise.all(
+                jsonFiles.map(file => 
+                    fetch(`/static/json/${file}`)
+                        .then(response => {
+                            if (!response.ok) throw new Error(`Failed to load ${file}`);
+                            return response.json();
+                        })
+                )
+            )
+            .then(datas => {
+                // 计算全局最大残基编号，确保两条序列对齐
+                const maxResidue = Math.max(
+                    ...datas[0].helix, ...datas[0].strand, ...datas[0].turn,
+                    ...datas[1].helix, ...datas[1].strand, ...datas[1].turn,
+                    200 // 最小长度，确保条形图可见
+                );
+
+                // 绘制 Helix
+                for (let i = 0; i < datas.length; i++) {
+                    const helixSvg = d3.select(`#${helixIds[i]}`)
+                        .append("svg")
+                        .attr("width", 600)
+                        .attr("height", 20);
+                    helixSvg.selectAll("rect")
+                        .data(datas[i].helix)
+                        .enter()
+                        .append("rect")
+                        .attr("x", d => (d / maxResidue) * 600)
+                        .attr("y", 0)
+                        .attr("width", 2)
+                        .attr("height", 20)
+                        .attr("class", "helix");
+                }
+
+                // 绘制 Beta strand
+                for (let i = 0; i < datas.length; i++) {
+                    const strandSvg = d3.select(`#${strandIds[i]}`)
+                        .append("svg")
+                        .attr("width", 600)
+                        .attr("height", 20);
+                    strandSvg.selectAll("rect")
+                        .data(datas[i].strand)
+                        .enter()
+                        .append("rect")
+                        .attr("x", d => (d / maxResidue) * 600)
+                        .attr("y", 0)
+                        .attr("width", 2)
+                        .attr("height", 20)
+                        .attr("class", "strand");
+                }
+
+                // 绘制 Turn
+                for (let i = 0; i < datas.length; i++) {
+                    const turnSvg = d3.select(`#${turnIds[i]}`)
+                        .append("svg")
+                        .attr("width", 600)
+                        .attr("height", 20);
+                    turnSvg.selectAll("rect")
+                        .data(datas[i].turn)
+                        .enter()
+                        .append("rect")
+                        .attr("x", d => (d / maxResidue) * 600)
+                        .attr("y", 0)
+                        .attr("width", 2)
+                        .attr("height", 20)
+                        .attr("class", "turn");
+                }
+            })
+            .catch(error => {
+                document.getElementById("error").innerText += `\nFailed to load secondary structure: ${error.message}`;
+                console.error(error);
+            });
+        }
+
+        // 调用函数，绘制对比图
+        drawSecondaryStructure(
+            ["aligned1_structure.json", "aligned2_structure.json"],
+            ["helix1", "helix2"],
+            ["strand1", "strand2"],
+            ["turn1", "turn2"]
+        );
+    </script>
+</body>
+</html>
