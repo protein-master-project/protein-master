@@ -5,9 +5,11 @@
 pip install -r requirements.txt
 python run.py
 ```
-PyMOL Install
+PyMOL and dssp Install
 ```
 brew install brewsci/bio/pymol # for macbook
+brew install brewsci/bio/dssp
+
 ```
 OpenAI Key(Optional)
 ```

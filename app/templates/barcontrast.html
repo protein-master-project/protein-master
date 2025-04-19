@@ -73,93 +73,151 @@
             <div id="turn2" class="structure-bar"></div>
         </div>
     </div>
-
     <script>
+/* ────────────── ① 可从表单或 URL 获取，演示写死 ─────────────── */
+// const pdb1 = '1avr';
+// const pdb2 = '4pti';
+const pdb1 = '1HHO'
+const pdb2 = '2HHB'
 
-        // 获取并绘制二级结构对比图
-        function drawSecondaryStructure(jsonFiles, helixIds, strandIds, turnIds) {
-            // 同步加载两个 JSON 文件
-            Promise.all(
-                jsonFiles.map(file => 
-                    fetch(`/static/json/${file}`)
-                        .then(response => {
-                            if (!response.ok) throw new Error(`Failed to load ${file}`);
-                            return response.json();
-                        })
-                )
-            )
-            .then(datas => {
-                // 计算全局最大残基编号，确保两条序列对齐
-                const maxResidue = Math.max(
-                    ...datas[0].helix, ...datas[0].strand, ...datas[0].turn,
-                    ...datas[1].helix, ...datas[1].strand, ...datas[1].turn,
-                    200 // 最小长度，确保条形图可见
-                );
+/* ────────────── ② 向新接口取数 ──────────────────────────────── */
+fetch(`/api/barcontrast?pdb1=${pdb1}${pdb2 ? `&pdb2=${pdb2}` : ''}`)
+  .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
+  .then(json => {
+      /* json = { "1avr": {...}, "4pti": {...} } 或 { "1avr": {...} } */
+      const datasets = Object.values(json);      // [ {helix:[],…}, {…} ]
+      renderSecondaryStructure(datasets);
+  })
+  .catch(err => console.error('Bar‑contrast load failed:', err));
 
-                // 绘制 Helix
-                for (let i = 0; i < datas.length; i++) {
-                    const helixSvg = d3.select(`#${helixIds[i]}`)
-                        .append("svg")
-                        .attr("width", 600)
-                        .attr("height", 20);
-                    helixSvg.selectAll("rect")
-                        .data(datas[i].helix)
-                        .enter()
-                        .append("rect")
-                        .attr("x", d => (d / maxResidue) * 600)
-                        .attr("y", 0)
-                        .attr("width", 2)
-                        .attr("height", 20)
-                        .attr("class", "helix");
-                }
 
-                // 绘制 Beta strand
-                for (let i = 0; i < datas.length; i++) {
-                    const strandSvg = d3.select(`#${strandIds[i]}`)
-                        .append("svg")
-                        .attr("width", 600)
-                        .attr("height", 20);
-                    strandSvg.selectAll("rect")
-                        .data(datas[i].strand)
-                        .enter()
-                        .append("rect")
-                        .attr("x", d => (d / maxResidue) * 600)
-                        .attr("y", 0)
-                        .attr("width", 2)
-                        .attr("height", 20)
-                        .attr("class", "strand");
-                }
+/* ────────────── ③ 绘图逻辑 ─────────────── */
+function renderSecondaryStructure(datasets) {
+    if (!datasets.length) return;
 
-                // 绘制 Turn
-                for (let i = 0; i < datas.length; i++) {
-                    const turnSvg = d3.select(`#${turnIds[i]}`)
-                        .append("svg")
-                        .attr("width", 600)
-                        .attr("height", 20);
-                    turnSvg.selectAll("rect")
-                        .data(datas[i].turn)
-                        .enter()
-                        .append("rect")
-                        .attr("x", d => (d / maxResidue) * 600)
-                        .attr("y", 0)
-                        .attr("width", 2)
-                        .attr("height", 20)
-                        .attr("class", "turn");
-                }
-            })
-            .catch(error => {
-                document.getElementById("error").innerText += `\nFailed to load secondary structure: ${error.message}`;
-                console.error(error);
-            });
-        }
+    /* 计算全局最大残基编号，保证两条对齐 */
+    const maxResidue = Math.max(
+        ...datasets.flatMap(d => [...d.helix, ...d.strand, ...d.turn]),
+        200               // 至少 200，确保条形图可见
+    );
 
-        // 调用函数，绘制对比图
-        drawSecondaryStructure(
-            ["aligned1_structure.json", "aligned2_structure.json"],
-            ["helix1", "helix2"],
-            ["strand1", "strand2"],
-            ["turn1", "turn2"]
-        );
-    </script>
+    /* 对应到你页面里的 div ID */
+    const helixIds  = ['helix1',  'helix2'];
+    const strandIds = ['strand1', 'strand2'];
+    const turnIds   = ['turn1',   'turn2'];
+
+    drawBar('helix',  datasets, helixIds,  '#ff4040');
+    drawBar('strand', datasets, strandIds, '#ffd700');
+    drawBar('turn',   datasets, turnIds,   '#4040ff');
+
+    /* ---------- 内部小工具 ---------- */
+    function drawBar(type, dataArr, idArr, cssClass) {
+        dataArr.forEach((data, i) => {
+            /* 允许只传一个 PDB 时不绘制第二条 */
+            if (!idArr[i]) return;
+            const svg = d3.select(`#${idArr[i]}`)
+                .selectAll('svg').data([null]).join('svg')
+                .attr('width', 600).attr('height', 20);
+
+            svg.selectAll('rect')
+               .data(data[type])
+               .join('rect')
+               .attr('x', d => (d / maxResidue) * 600)
+               .attr('y', 0)
+               .attr('width', 2)
+               .attr('height', 20)
+               .attr('class', type);         // 直接用已有 .helix / .strand / .turn
+        });
+    }
+}
+</script>
+
+<!--    <script>-->
+
+<!--        // 获取并绘制二级结构对比图-->
+<!--        function drawSecondaryStructure(jsonFiles, helixIds, strandIds, turnIds) {-->
+<!--            // 同步加载两个 JSON 文件-->
+<!--            Promise.all(-->
+<!--                jsonFiles.map(file =>-->
+<!--                    fetch(`/static/json/${file}`)-->
+<!--                        .then(response => {-->
+<!--                            if (!response.ok) throw new Error(`Failed to load ${file}`);-->
+<!--                            return response.json();-->
+<!--                        })-->
+<!--                )-->
+<!--            )-->
+<!--            .then(datas => {-->
+<!--                // 计算全局最大残基编号，确保两条序列对齐-->
+<!--                const maxResidue = Math.max(-->
+<!--                    ...datas[0].helix, ...datas[0].strand, ...datas[0].turn,-->
+<!--                    ...datas[1].helix, ...datas[1].strand, ...datas[1].turn,-->
+<!--                    200 // 最小长度，确保条形图可见-->
+<!--                );-->
+
+<!--                // 绘制 Helix-->
+<!--                for (let i = 0; i < datas.length; i++) {-->
+<!--                    const helixSvg = d3.select(`#${helixIds[i]}`)-->
+<!--                        .append("svg")-->
+<!--                        .attr("width", 600)-->
+<!--                        .attr("height", 20);-->
+<!--                    helixSvg.selectAll("rect")-->
+<!--                        .data(datas[i].helix)-->
+<!--                        .enter()-->
+<!--                        .append("rect")-->
+<!--                        .attr("x", d => (d / maxResidue) * 600)-->
+<!--                        .attr("y", 0)-->
+<!--                        .attr("width", 2)-->
+<!--                        .attr("height", 20)-->
+<!--                        .attr("class", "helix");-->
+<!--                }-->
+
+<!--                // 绘制 Beta strand-->
+<!--                for (let i = 0; i < datas.length; i++) {-->
+<!--                    const strandSvg = d3.select(`#${strandIds[i]}`)-->
+<!--                        .append("svg")-->
+<!--                        .attr("width", 600)-->
+<!--                        .attr("height", 20);-->
+<!--                    strandSvg.selectAll("rect")-->
+<!--                        .data(datas[i].strand)-->
+<!--                        .enter()-->
+<!--                        .append("rect")-->
+<!--                        .attr("x", d => (d / maxResidue) * 600)-->
+<!--                        .attr("y", 0)-->
+<!--                        .attr("width", 2)-->
+<!--                        .attr("height", 20)-->
+<!--                        .attr("class", "strand");-->
+<!--                }-->
+
+<!--                // 绘制 Turn-->
+<!--                for (let i = 0; i < datas.length; i++) {-->
+<!--                    const turnSvg = d3.select(`#${turnIds[i]}`)-->
+<!--                        .append("svg")-->
+<!--                        .attr("width", 600)-->
+<!--                        .attr("height", 20);-->
+<!--                    turnSvg.selectAll("rect")-->
+<!--                        .data(datas[i].turn)-->
+<!--                        .enter()-->
+<!--                        .append("rect")-->
+<!--                        .attr("x", d => (d / maxResidue) * 600)-->
+<!--                        .attr("y", 0)-->
+<!--                        .attr("width", 2)-->
+<!--                        .attr("height", 20)-->
+<!--                        .attr("class", "turn");-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(error => {-->
+<!--                document.getElementById("error").innerText += `\nFailed to load secondary structure: ${error.message}`;-->
+<!--                console.error(error);-->
+<!--            });-->
+<!--        }-->
+
+<!--        // 调用函数，绘制对比图-->
+<!--        drawSecondaryStructure(-->
+<!--            ["aligned1_structure.json", "aligned2_structure.json"],-->
+<!--            ["helix1", "helix2"],-->
+<!--            ["strand1", "strand2"],-->
+<!--            ["turn1", "turn2"]-->
+<!--        );-->
+<!--    </script>-->
 </body>
 </html>

@@ -1,10 +1,18 @@
+import tempfile
+
+from Bio.PDB import PDBParser, DSSP
+
 from app import app
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_file, Blueprint
 import subprocess
 # from Bio.PDB import PDBParser
 # from Bio.PDB.DSSP import DSSP
 import json
 import os
+
+from connecter import ConnectorFactory
+from processor.protein_align_processor import align_with_pymol
+
 
 @app.route('/molstar')
 def index():
@@ -43,9 +51,18 @@ def contrast():
 #
 # @app.route('/process_pdb')
 # def process_pdb():
-#     pdb_path = 'static/pdb/1avr.pdb'
+#     # pdb_path = 'static/pdb/1avr.pdb'
+#     pdb = '1avr'
+#     connector = ConnectorFactory.get_connector("rcsb")
+#     pdb_content = connector.download_proteins_by_pdb_id(pdb)
+#     tmp = tempfile.NamedTemporaryFile(delete=False, mode='w+', encoding='utf-8')
+#     tmp.write(pdb_content)
+#     tmp.flush()
+#
+#     pdb_path =  tmp.name
+#
 #     parser = PDBParser()
-#     structure = parser.get_structure("X", pdb_path)
+#     structure = parser.get_structure("X",  pdb_path)
 #     model = structure[0]
 #     dssp = DSSP(model, pdb_path)
 #
@@ -116,12 +133,6 @@ def contrast():
 #     with open(json_path, 'w') as f:
 #         json.dump(structures, f)
 #
-# @app.route('/barcontrast')
-# def show_pdb():
-#
-#     generate_structure_json('aligned1')
-#     generate_structure_json('aligned2')
-#     return render_template('barcontrast.html')
-#
-# if __name__ == '__main__':
-#     app.run(debug=True, host='0.0.0.0', port=5000)
+@app.route('/barcontrast')
+def show_pdb():
+    return render_template('barcontrast.html')

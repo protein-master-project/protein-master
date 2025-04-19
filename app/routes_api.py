@@ -6,6 +6,7 @@ from app import app
 from flask import Flask, request, jsonify, Response
 from connecter import ConnectorFactory
 from processor.protein_align_processor import align_with_pymol
+from processor.protein_dssp_processor import _dssp_for_pdb_text
 
 
 @app.route('/test', methods=['GET'])
@@ -159,3 +160,59 @@ def align_proteins():
     })
 
 
+@app.route("/api/barcontrast", methods=["GET"])
+def api_barcontrast():
+    """
+    GET /api/barcontrast?pdb1=1avr&pdb2=4pti[&db=rcsb][&align=true|false]
+
+    返回 JSON 形如
+    {
+      "1avr": {"helix":[…], "strand":[…], "turn":[…]},
+      "4pti": {"helix":[…], "strand":[…], "turn":[…]}
+    }
+    """
+    pdb1_id = request.args.get("pdb1", "").lower()
+    pdb2_id = request.args.get("pdb2", "").lower()
+    db      = request.args.get("db",  "rcsb").lower()
+    do_align = request.args.get("align", "true").lower() != "false"
+
+    if not pdb1_id or not pdb2_id:
+        return jsonify({"error": "parameters 'pdb1' and 'pdb2' are required"}), 400
+
+    # 1) 下载原始 PDB
+    connector = ConnectorFactory.get_connector(db)
+    if connector is None:
+        return jsonify({"error": f"no connector for db '{db}'"}), 400
+    try:
+        pdb1_raw = connector.download_proteins_by_pdb_id(pdb1_id)
+        pdb2_raw = connector.download_proteins_by_pdb_id(pdb2_id)
+    except Exception as e:
+        return jsonify({"error": f"download error: {e}"}), 500
+
+    # 2) 如需对齐，先落地两个文件 → align_with_pymol → 得到对齐后的文本
+    if do_align:
+        print("doing align...")
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                path1 = os.path.join(tmpdir, f"{pdb1_id}.pdb")
+                path2 = os.path.join(tmpdir, f"{pdb2_id}.pdb")
+                for txt, p in [(pdb1_raw, path1), (pdb2_raw, path2)]:
+                    with open(p, "w") as fh:
+                        fh.write(txt)
+
+                pdb1_text, pdb2_text = align_with_pymol(path1, path2)
+        except Exception as e:
+            return jsonify({"error": f"alignment error: {e}"}), 500
+    else:
+        pdb1_text, pdb2_text = pdb1_raw, pdb2_raw
+
+    # 3) DSSP
+    try:
+        result = {
+            pdb1_id: _dssp_for_pdb_text(pdb1_text),
+            pdb2_id: _dssp_for_pdb_text(pdb2_text),
+        }
+    except subprocess.CalledProcessError as e:
+        return jsonify({"error": f"DSSP error: {e}"}), 500
+
+    return jsonify(result)
