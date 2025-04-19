@@ -9,7 +9,10 @@ PyMOL Install
 ```
 brew install brewsci/bio/pymol # for macbook
 ```
-
+OpenAI Key(Optional)
+```
+export OPENAI_API_KEY=[your openai key]
+```
 
 ## APIs
 ```

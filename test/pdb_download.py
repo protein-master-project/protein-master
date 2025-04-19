@@ -1,6 +1,6 @@
 import requests
 
-pdb_id = '3SL9'
+pdb_id = '7LHD'
 url = f'https://files.rcsb.org/download/{pdb_id}.pdb'
 
 response = requests.get(url)

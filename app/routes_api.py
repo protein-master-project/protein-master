@@ -4,16 +4,9 @@ import tempfile
 
 from app import app
 from flask import Flask, request, jsonify, Response
-
 from connecter import ConnectorFactory
-# import pymol
-# from pymol import cmd
-from ipymol import viewer as pymol
-
 from processor.protein_align_processor import align_with_pymol
 
-
-# from ipymol import cmd as cmd
 
 @app.route('/test', methods=['GET'])
 def get_data():
@@ -164,3 +157,5 @@ def align_proteins():
         "aligned1": aligned1_text,
         "aligned2": aligned2_text
     })
+
+

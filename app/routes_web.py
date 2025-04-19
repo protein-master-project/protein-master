@@ -15,6 +15,10 @@ def index():
 def matrix():
     return render_template('matrix.html')
 
+@app.route('/chatapp')
+def chatapp():
+    return render_template('chat.html')
+
 # def align_and_view():
 #     pdb1 = '1avr'
 #     pdb2 = '4pti'
