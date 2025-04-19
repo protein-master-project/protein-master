@@ -1,18 +1,5 @@
-import tempfile
-
-from Bio.PDB import PDBParser, DSSP
-
 from app import app
 from flask import Flask, jsonify, render_template, request, send_file, Blueprint
-import subprocess
-# from Bio.PDB import PDBParser
-# from Bio.PDB.DSSP import DSSP
-import json
-import os
-
-from connecter import ConnectorFactory
-from processor.protein_align_processor import align_with_pymol
-
 
 @app.route('/molstar')
 def index():
@@ -48,6 +35,12 @@ def chatapp():
 @app.route('/contrast')
 def contrast():
     return render_template('contrast.html')
+
+@app.route('/barcontrast')
+def show_pdb():
+    return render_template('barcontrast.html')
+
+
 #
 # @app.route('/process_pdb')
 # def process_pdb():
@@ -133,6 +126,4 @@ def contrast():
 #     with open(json_path, 'w') as f:
 #         json.dump(structures, f)
 #
-@app.route('/barcontrast')
-def show_pdb():
-    return render_template('barcontrast.html')
+

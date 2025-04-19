@@ -165,7 +165,7 @@ def api_barcontrast():
     """
     GET /api/barcontrast?pdb1=1avr&pdb2=4pti[&db=rcsb][&align=true|false]
 
-    返回 JSON 形如
+    return JSON
     {
       "1avr": {"helix":[…], "strand":[…], "turn":[…]},
       "4pti": {"helix":[…], "strand":[…], "turn":[…]}

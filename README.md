@@ -7,9 +7,9 @@ python run.py
 ```
 PyMOL and dssp Install
 ```
-brew install brewsci/bio/pymol # for macbook
+# for MacOS
+brew install brewsci/bio/pymol
 brew install brewsci/bio/dssp
-
 ```
 OpenAI Key(Optional)
 ```
