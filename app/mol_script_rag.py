@@ -1,3 +1,6 @@
+# TODO: RAG
+
+
 prompt = """
 ## The following is a sample library of mol script queries:
 
@@ -793,7 +796,7 @@ const loci = StructureSelection.toLociWithSourceUnits(selection);
 plugin.managers.interactivity.lociSelects.select({ loci: loci });
 ```
 
-## you only need to generate the key query part, for example:
+## you only need to generate the key query part:
 Q.struct.generator.atomGroups({
     'atom-test': MS.core.set.has([MS.set(proteinData.selectedAtom[0], proteinData.selectedAtom[1]), MS.ammp('id')]),
 })
