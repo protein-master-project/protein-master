@@ -46,7 +46,7 @@ def chat():
             model="gpt-4.1",
             messages=messages,
             temperature=0.7,
-            max_tokens=1024
+            max_tokens=1024 * 8
         )
 
         # 4. Access the response message

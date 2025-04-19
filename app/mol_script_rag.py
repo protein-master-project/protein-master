@@ -1,5 +1,5 @@
 prompt = """
-The following is a sample library of mol script queries:
+## The following is a sample library of mol script queries:
 
 import { CustomProperty } from '../../mol-model-props/common/custom-property';
 import { QueryContext, Structure, StructureQuery, StructureSelection, StructureProperties, StructureElement } from '../../mol-model/structure';
@@ -777,22 +777,28 @@ export class StructureSelectionQueryRegistry {
     }
 }
 
-Below is the code skeleton that the user's query script runs:
+---
+
+## Below is the code skeleton that the user's query script runs:
+```python
 const data = plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
 if (!data) return;
 
-# Execute key code
+# execute key code
 const selection = Script.getStructureSelection(Q => Q.struct.generator.atomGroups({
     'atom-test': MS.core.set.has([MS.set(proteinData.selectedAtom[0], proteinData.selectedAtom[1]), MS.ammp('id')]),
 }), data);
 
 const loci = StructureSelection.toLociWithSourceUnits(selection);   
 plugin.managers.interactivity.lociSelects.select({ loci: loci });
+```
 
-
-For this code, you only need to generate the key query part:
+## you only need to generate the key query part, for example:
 Q.struct.generator.atomGroups({
     'atom-test': MS.core.set.has([MS.set(proteinData.selectedAtom[0], proteinData.selectedAtom[1]), MS.ammp('id')]),
 })
 
+---
+
+You need to generate corresponding queries based on user needs and the mol script API!
 """
