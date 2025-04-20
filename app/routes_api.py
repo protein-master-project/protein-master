@@ -163,56 +163,69 @@ def align_proteins():
 @app.route("/api/barcontrast", methods=["GET"])
 def api_barcontrast():
     """
-    GET /api/barcontrast?pdb1=1avr&pdb2=4pti[&db=rcsb][&align=true|false]
+    GET /api/barcontrast?pdb1=1avr[&pdb2=4pti][&db=rcsb][&align=true|false]
 
-    return JSON
+    return JSON:
     {
-      "1avr": {"helix":[…], "strand":[…], "turn":[…]},
-      "4pti": {"helix":[…], "strand":[…], "turn":[…]}
+      "1avr": {"helix": [...], "strand": [...], "turn": [...]},
+      "4pti": {"helix": [...], "strand": [...], "turn": [...]}
     }
     """
     pdb1_id = request.args.get("pdb1", "").lower()
     pdb2_id = request.args.get("pdb2", "").lower()
-    db      = request.args.get("db",  "rcsb").lower()
+    db = request.args.get("db", "rcsb").lower()
     do_align = request.args.get("align", "true").lower() != "false"
 
-    if not pdb1_id or not pdb2_id:
-        return jsonify({"error": "parameters 'pdb1' and 'pdb2' are required"}), 400
+    if not pdb1_id:
+        return jsonify({"error": "parameter 'pdb1' is required"}), 400
 
-    # 1) 下载原始 PDB
     connector = ConnectorFactory.get_connector(db)
     if connector is None:
         return jsonify({"error": f"no connector for db '{db}'"}), 400
+
+    # 下载第一个蛋白质
     try:
         pdb1_raw = connector.download_proteins_by_pdb_id(pdb1_id)
-        pdb2_raw = connector.download_proteins_by_pdb_id(pdb2_id)
     except Exception as e:
-        return jsonify({"error": f"download error: {e}"}), 500
+        return jsonify({"error": f"download error (pdb1): {e}"}), 500
 
-    # 2) 如需对齐，先落地两个文件 → align_with_pymol → 得到对齐后的文本
-    if do_align:
-        print("doing align...")
+    result = {}
+
+    if not pdb2_id:
+        # 单蛋白质情况：不对齐，直接处理 DSSP
         try:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                path1 = os.path.join(tmpdir, f"{pdb1_id}.pdb")
-                path2 = os.path.join(tmpdir, f"{pdb2_id}.pdb")
-                for txt, p in [(pdb1_raw, path1), (pdb2_raw, path2)]:
-                    with open(p, "w") as fh:
-                        fh.write(txt)
-
-                pdb1_text, pdb2_text = align_with_pymol(path1, path2)
-        except Exception as e:
-            return jsonify({"error": f"alignment error: {e}"}), 500
+            result[pdb1_id] = _dssp_for_pdb_text(pdb1_raw)
+        except subprocess.CalledProcessError as e:
+            return jsonify({"error": f"DSSP error (pdb1): {e}"}), 500
     else:
-        pdb1_text, pdb2_text = pdb1_raw, pdb2_raw
+        # 下载第二个蛋白质
+        try:
+            pdb2_raw = connector.download_proteins_by_pdb_id(pdb2_id)
+        except Exception as e:
+            return jsonify({"error": f"download error (pdb2): {e}"}), 500
 
-    # 3) DSSP
-    try:
-        result = {
-            pdb1_id: _dssp_for_pdb_text(pdb1_text),
-            pdb2_id: _dssp_for_pdb_text(pdb2_text),
-        }
-    except subprocess.CalledProcessError as e:
-        return jsonify({"error": f"DSSP error: {e}"}), 500
+        # 对齐逻辑（如启用）
+        if do_align:
+            print("doing align...")
+            try:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    path1 = os.path.join(tmpdir, f"{pdb1_id}.pdb")
+                    path2 = os.path.join(tmpdir, f"{pdb2_id}.pdb")
+                    for txt, p in [(pdb1_raw, path1), (pdb2_raw, path2)]:
+                        with open(p, "w") as fh:
+                            fh.write(txt)
+                    pdb1_text, pdb2_text = align_with_pymol(path1, path2)
+            except Exception as e:
+                return jsonify({"error": f"alignment error: {e}"}), 500
+        else:
+            pdb1_text, pdb2_text = pdb1_raw, pdb2_raw
+
+        # 分别进行 DSSP
+        try:
+            result[pdb1_id] = _dssp_for_pdb_text(pdb1_text)
+            result[pdb2_id] = _dssp_for_pdb_text(pdb2_text)
+        except subprocess.CalledProcessError as e:
+            return jsonify({"error": f"DSSP error: {e}"}), 500
 
     return jsonify(result)
+
