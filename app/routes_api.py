@@ -3,10 +3,11 @@ import subprocess
 import tempfile
 
 from app import app
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, abort
 from connecter import ConnectorFactory
 from processor.protein_align_processor import align_with_pymol
 from processor.protein_dssp_processor import _dssp_for_pdb_text
+from rcsbapi.data import DataQuery
 
 
 @app.route('/test', methods=['GET'])
@@ -228,4 +229,37 @@ def api_barcontrast():
             return jsonify({"error": f"DSSP error: {e}"}), 500
 
     return jsonify(result)
+
+
+RETURN_FIELDS = [
+    "entries.rcsb_id",
+    "nonpolymer_entities.nonpolymer_entity_instances.rcsb_nonpolymer_entity_instance_container_identifiers.comp_id",
+    "nonpolymer_entities.nonpolymer_entity_instances.rcsb_nonpolymer_instance_validation_score.is_subject_of_investigation",
+    "citation.title",
+    "citation.pdbx_database_id_DOI",
+]
+
+def fetch_pdb_entry(pdb_id: str) -> dict:
+    query = DataQuery(
+        input_type="entries",
+        input_ids=[pdb_id.upper()],
+        return_data_list=RETURN_FIELDS
+    )
+    query.exec()
+    response = query.get_response()
+    entries = response.get("data", {}).get("entries", [])
+    if not entries:
+        abort(404, description=f"PDB entry '{pdb_id}' not found.")
+    return entries[0]
+
+@app.route("/api/pdb/<string:pdb_id>", methods=["GET"])
+def get_pdb_info(pdb_id):
+    try:
+        entry = fetch_pdb_entry(pdb_id)
+        print(entry)
+        return jsonify(entry)
+    except Exception as exc:
+        if not hasattr(exc, "code"):    # 让 abort 抛出的 HTTPException 直接透传
+            abort(500, description=str(exc))
+
 

@@ -1,6 +1,5 @@
 # TODO: RAG
 
-
 prompt = """
 ## The following is a sample library of mol script queries:
 

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, Response
+from flask import request, jsonify, Response
 import os
 # 1. Import the OpenAI class and potentially error types
 from openai import OpenAI, APIError
@@ -6,7 +6,8 @@ from openai import OpenAI, APIError
 # If this file is the main application file, you might initialize it like this:
 # from flask import Flask
 # app = Flask(__name__)
-from app import app, mol_script_rag  # Assuming app is defined in app.py or similar
+from app import app  # Assuming app is defined in app.py or similar
+from rag import mol_script_rag
 
 # 2. Initialize the OpenAI client (v1.0.0+)
 # It's generally better to initialize the client once outside the request handler
