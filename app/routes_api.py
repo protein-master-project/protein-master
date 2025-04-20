@@ -20,7 +20,7 @@ def get_data():
 def search_proteins():
     keyword = request.args.get('keyword', '').strip()
     db = request.args.get('db', '').strip().lower()
-
+    print(keyword)
     if not keyword or not db:
         return jsonify({"error": "Missing 'keyword' or 'db' parameter"}), 400
 
